@@ -16,6 +16,8 @@ void setup() {
   for(int i=0;i<8;i++){
     pinMode(i,OUTPUT); analogWriteFrequency(0, 375000); analogWrite(i,64);
   }
+  pinMode(21,OUTPUT);
+  digitalWrite(21,LOW);
   // put your setup code here, to run once:
   delay(5000);
   FanSpeed=255;
