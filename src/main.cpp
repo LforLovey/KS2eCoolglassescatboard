@@ -11,6 +11,7 @@
 #define CAN_ENABLE 21
 uint8_t FanSpeed=64;
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> CAN;
+void canSniff(const CAN_message_t &msg);
 void setup() {
   for(int i=0;i<8;i++){
     pinMode(i,OUTPUT); analogWriteFrequency(0, 375000); analogWrite(i,64);
@@ -37,6 +38,9 @@ void canSniff(const CAN_message_t &msg) {
   for ( uint8_t i = 0; i < msg.len; i++ ) {
     Serial.print(msg.buf[i], HEX); Serial.print(" ");
   } Serial.println();
+  if(msg.id==0xC5){
+    FanSpeed=msg.buf[0];
+  }
 }
 
 void loop() {
