@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <FlexCAN_T4.h>
+#include <Metro.h>
 #define PWM1 0
 #define PWM2 1
 #define PWM3 2
@@ -11,16 +12,17 @@
 #define CAN_ENABLE 21
 uint8_t FanSpeed=64;
 FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> CAN;
+Metro fc=Metro(1000);
 void canSniff(const CAN_message_t &msg);
 void setup() {
   for(int i=0;i<8;i++){
-    pinMode(i,OUTPUT); analogWriteFrequency(0, 375000); analogWrite(i,64);
+    pinMode(i,OUTPUT); analogWriteFrequency(0, 375000); analogWrite(i,255);
   }
-  pinMode(21,OUTPUT);
-  digitalWrite(21,LOW);
+  pinMode(CAN_ENABLE,OUTPUT);
+  digitalWrite(CAN_ENABLE,LOW);
   // put your setup code here, to run once:
-  delay(5000);
-  FanSpeed=255;
+  delay(500);
+  FanSpeed=64;
   CAN.begin();
   CAN.setBaudRate(500000);
   CAN.enableFIFO();
@@ -44,21 +46,23 @@ void canSniff(const CAN_message_t &msg) {
     FanSpeed=msg.buf[0];
   }
 }
-
+void  fcHeartbeat();
 void loop() {
   CAN.events();
 
   for(int i=0;i<8;i++){
     analogWrite(i,FanSpeed);
   }
-  // delay(1000);
-  // for(int i=0;i<8;i++){
-  //   digitalWrite(i,HIGH);
-    
-  // }
-  // delay(1000);
-  // analogWrite(0,128);
-  // delay(1000);
-  // analogWrite(0,64);
-  // delay(1000);
+     fcHeartbeat();
+
+}
+void fcHeartbeat(){ //know if FC is alive
+    if(fc.check()){
+    CAN_message_t ctrlMsg;
+      ctrlMsg.len=8;
+      ctrlMsg.id=0x22;
+      uint8_t heartbeatMsg[]={0,0,0,0,1,1,0,0};
+      memcpy(ctrlMsg.buf, heartbeatMsg, sizeof(ctrlMsg.buf));
+      CAN.write(ctrlMsg);
+    }
 }
